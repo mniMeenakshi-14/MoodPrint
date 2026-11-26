@@ -1,0 +1,304 @@
+/* ==========================================
+   MOODPRINT — CALM WELLNESS THEME
+   Warm cream | Sage | Beige | Olive | Brown
+========================================== */
+
+:root {
+  color-scheme: light;
+
+  --bg: #F5F1E8;
+  --bg2: #EDE6D9;
+
+  --glass: rgba(255, 255, 255, 0.68);
+  --glass2: #E8DFD0;
+  --line: #DDD3C4;
+
+  --ink: #403B35;
+  --muted: #8B8174;
+
+  --purple: #A5A58D;
+  --purple2: #77785D;
+  --ice: #92977A;
+  --green: #78866B;
+  --coral: #C58F78;
+  --orange: #BD9871;
+
+  --grad: linear-gradient(135deg, #A5A58D, #77785D);
+
+  --r: 18px;
+}
+
+/* Main background */
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* Soft ambient background */
+
+.glow {
+  opacity: 0.12;
+  filter: blur(130px);
+}
+
+.g1 {
+  background: #C8BBA7;
+}
+
+.g2 {
+  background: #A5A58D;
+  opacity: 0.10;
+}
+
+/* Glass cards */
+
+.glass {
+  background: rgba(255,255,255,0.65);
+  border: 1px solid #E2D9CB;
+  box-shadow: 0 5px 20px rgba(90,75,55,0.045);
+  backdrop-filter: blur(14px);
+}
+
+/* Buttons */
+
+.btn {
+  color: var(--ink);
+}
+
+.btn.primary {
+  background: var(--grad);
+  color: #FFFFFF;
+  box-shadow: 0 5px 16px rgba(119,120,93,0.20);
+}
+
+.btn.primary:hover {
+  filter: brightness(1.06);
+}
+
+.btn.ghost {
+  background: #EEE8DC;
+  border: 1px solid #DDD3C4;
+  color: #51483D;
+}
+
+/* Forms */
+
+input,
+select,
+textarea {
+  background: #FAF8F3;
+  color: var(--ink);
+  border: 1px solid #DDD3C4;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--purple2);
+}
+
+select option {
+  background: #F5F1E8;
+  color: var(--ink);
+}
+
+.seg {
+  background: #EDE6D9;
+  border-color: #DDD3C4;
+}
+
+.seg button.on {
+  background: var(--grad);
+  color: white;
+}
+
+/* Authentication */
+
+.auth-card {
+  background: #FAF8F3;
+  border-color: #E2D9CB;
+}
+
+/* Sidebar */
+
+aside {
+  background: rgba(237,230,217,0.92);
+  border-color: #DDD3C4;
+}
+
+.nv {
+  color: #81776B;
+}
+
+.nv:hover {
+  background: #E8DFD0;
+  color: #403B35;
+}
+
+.nv.on {
+  background: linear-gradient(
+    90deg,
+    rgba(165,165,141,0.30),
+    rgba(119,120,93,0.10)
+  );
+  color: #514F3D;
+  box-shadow: inset 3px 0 0 #77785D;
+}
+
+.avatar {
+  background: var(--grad);
+  color: white;
+}
+
+/* Dashboard */
+
+.banner {
+  background: #EAE7D9;
+  border-color: #D8D4BF;
+}
+
+.kpi {
+  background: rgba(255,255,255,0.72);
+}
+
+.meter,
+.ibar {
+  background: #E4DDCF;
+}
+
+/* Journal */
+
+.paper {
+  background: #FAF8F3;
+  border-color: #DDD3C4;
+}
+
+.entry {
+  background: #FAF8F3;
+  border-color: #E2D9CB;
+}
+
+.corr {
+  background: #EAE7D9;
+}
+
+/* Mood selection */
+
+.pk {
+  background: #F4F0E7;
+  color: var(--ink);
+  border-color: #DDD3C4;
+}
+
+.pk:hover {
+  background: #EAE5D9;
+}
+
+/* Charts */
+
+.tip {
+  background: #FAF8F3;
+  color: var(--ink);
+  border-color: #DDD3C4;
+  box-shadow: 0 8px 24px rgba(70,60,45,0.12);
+}
+
+/* Chat */
+
+.msg {
+  background: #EAE5D9;
+  color: var(--ink);
+}
+
+.msg.me {
+  background: linear-gradient(
+    135deg,
+    #DADCCB,
+    #E9DED0
+  );
+  color: #403B35;
+}
+
+/* Counsellor and support */
+
+.li {
+  color: var(--ink);
+}
+
+.li:hover,
+.li.on {
+  background: #E8DFD0;
+}
+
+/* Modal and notifications */
+
+.overlay {
+  background: rgba(55,48,40,0.42);
+}
+
+.modal {
+  background: #F7F3EB;
+  border: 1px solid #DDD3C4;
+}
+
+.toast {
+  background: #514F43;
+  color: #FFFFFF;
+  border-color: #77785D;
+}
+
+/* Landing page */
+
+.grad-text,
+.l-logo,
+.grad {
+  background: linear-gradient(135deg, #77785D, #A5A58D);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Scrollbar */
+
+* {
+  scrollbar-color: #C8BEAD #F5F1E8;
+}
+
+/* Focus */
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline-color: #77785D;
+}
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background: #F5F1E8 !important;
+}
+
+body {
+  min-height: 100vh;
+  background: #F5F1E8 !important;
+  color: #403B35;
+}
+
+#root {
+  min-height: 100vh;
+  background: #F5F1E8 !important;
+}
+
+.app,
+.landing {
+  min-height: 100vh;
+  background: #F5F1E8 !important;
+}

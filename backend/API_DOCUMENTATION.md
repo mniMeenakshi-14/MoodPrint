@@ -2,234 +2,443 @@
 
 ## 1. Project Overview
 
-MoodPrint is a private mood-journaling application.
+MoodPrint is a privacy-focused mood journaling application.
 
-The backend is developed using:
-- Python
+### Backend Technology
+- Python 3.12
 - Flask
 - MySQL
 - Flask-JWT-Extended
 - Flask-Bcrypt
+- Flask-CORS
 
-The backend stores encrypted journal content. It does not decrypt or read users' journal entries.
+### Security Architecture
+- Client-side PBKDF2 key derivation.
+- Client-side AES-GCM encryption.
+- JWT authentication.
+- Encrypted journal storage.
+- Encrypted mood-analysis storage.
+- Backend does not decrypt journal content.
+
+**Important:** Genuine frontend AES-GCM integration and end-to-end encryption still need to be tested.
 
 ## 2. Base URL
-text
-http://127.0.0.1:5000
 
-## 3. Authentication APIs
+Local development:
 
-### 3.1 User Registration
+`http://127.0.0.1:5000`
 
-- **Method:** POST
-- **Endpoint:** `/api/auth/register`
-- **Authentication:** Not required
+Health check:
 
-**Request Body:**
+`GET /api/health`
+
+Example response:
 
 ```json
 {
-    "username": "TestUser",
-    "email": "testuser02@example.com",
-    "login_key": "CLIENT_DERIVED_LOGIN_KEY",
-    "salt": "CLIENT_GENERATED_SALT"
+    "project": "MoodPrint",
+    "status": "healthy"
 }
 ```
 
-**Success Response:** HTTP 201
+## 3. Authentication APIs
+
+### 3.1 Account Lookup
+
+- Method: GET
+- Endpoint: `/api/accounts/by-username/<username>`
+- Authentication: Not required.
+
+Purpose:
+Retrieve the user's account ID, salt and PBKDF2 iteration count.
+
+Example:
+
+`GET /api/accounts/by-username/testuser`
+
+Success response:
+
+```json
+{
+    "id": 1,
+    "salt": "BASE64_ENCODED_SALT",
+    "iterations": 310000
+}
+```
+
+### 3.2 User Registration
+
+- Method: POST
+- Endpoint: `/api/accounts`
+- Authentication: Not required.
+
+Request body:
+
+```json
+{
+    "username": "testuser",
+    "name": "Test User",
+    "role": "student",
+    "salt": "BASE64_ENCODED_SALT",
+    "iterations": 310000,
+    "login_verifier": "64_CHARACTER_HEX_VERIFIER",
+    "profile": {}
+}
+```
+
+Supported roles:
+- student
+- counsellor
+
+The frontend generates the salt and derives the login verifier.
+
+The backend hashes the login verifier using bcrypt before storing it.
+
+Success response: HTTP 201
 
 ```json
 {
     "message": "Registration successful",
-    "status": "success"
+    "token": "JWT_ACCESS_TOKEN",
+    "user": {
+        "id": 1,
+        "username": "testuser",
+        "name": "Test User",
+        "role": "student",
+        "profile": {}
+    }
 }
 ```
 
-### 3.2 User Login
+### 3.3 User Login
 
-- **Method:** POST
-- **Endpoint:** `/api/auth/login`
-- **Authentication:** Not required
+- Method: POST
+- Endpoint: `/api/accounts/<user_id>/login`
+- Authentication: Not required.
 
-**Request Body:**
+The frontend first looks up the account using the username.
+
+It then derives the login verifier using the stored salt and PBKDF2 iteration count.
+
+Request body:
 
 ```json
 {
-    "email": "testuser02@example.com",
-    "login_key": "CLIENT_DERIVED_LOGIN_KEY"
+    "login_verifier": "64_CHARACTER_HEX_VERIFIER"
 }
 ```
 
-**Success Response:** HTTP 200
+Success response: HTTP 200
 
-Returns an access token.
+```json
+{
+    "message": "Login successful",
+    "token": "JWT_ACCESS_TOKEN",
+    "user": {
+        "id": 1,
+        "username": "testuser",
+        "name": "Test User",
+        "role": "student",
+        "profile": {}
+    }
+}
+```
 
-The frontend must use this token for protected API requests.
+## 4. User Profile APIs
 
-## 4. Journal APIs
+All profile APIs require JWT authentication.
+
+### 4.1 Get Current User
+
+- Method: GET
+- Endpoint: `/api/me`
+
+Success response:
+
+```json
+{
+    "user": {
+        "id": 1,
+        "username": "testuser",
+        "name": "Test User",
+        "role": "student",
+        "profile": {}
+    }
+}
+```
+
+### 4.2 Update Current User
+
+- Method: PATCH
+- Endpoint: `/api/me`
+
+Request body:
+
+```json
+{
+    "name": "Updated Name",
+    "profile": {
+        "bio": "MoodPrint user"
+    }
+}
+```
+
+Only `name` and `profile` can be updated.
+
+Username, user ID and role cannot be changed through this API.
+
+Success response:
+
+```json
+{
+    "status": "success",
+    "message": "Profile updated successfully"
+}
+```
+
+## 5. Journal APIs
 
 All journal APIs require JWT authentication.
 
-### 4.1 Save Journal
+### 5.1 Save Journal
 
-- **Method:** POST
-- **Endpoint:** `/api/journals/`
+- Method: POST
+- Endpoint: `/api/journals/`
 
-**Request Body:**
+Request body:
 
 ```json
 {
     "journal_id": "journal_001",
-    "encrypted_content": "ENCRYPTED_JOURNAL_CONTENT",
-    "iv": "INITIALIZATION_VECTOR"
+    "encrypted_content": "BASE64_CIPHERTEXT",
+    "iv": "BASE64_IV"
 }
 ```
 
-### 4.2 Get All Journals
-
-- **Method:** GET
-- **Endpoint:** `/api/journals/`
-
-Returns the authenticated user's saved journals.
-
-### 4.3 Update Journal
-
-- **Method:** PUT
-- **Endpoint:** `/api/journals/<journal_id>`
-
-**Request Body:**
+Success response:
 
 ```json
 {
-    "encrypted_content": "UPDATED_ENCRYPTED_CONTENT",
-    "iv": "UPDATED_INITIALIZATION_VECTOR"
+    "status": "success",
+    "message": "Journal saved successfully"
 }
 ```
 
-### 4.4 Delete Journal
+### 5.2 Get All Journals
 
-- **Method:** DELETE
-- **Endpoint:** `/api/journals/<journal_id>`
+- Method: GET
+- Endpoint: `/api/journals/`
 
-Deletes the specified journal belonging to the authenticated user.
+Returns only journals belonging to the authenticated user.
 
-## 5. Offline Synchronization API
+### 5.3 Update Journal
 
-### Sync Offline Journals
+- Method: PUT
+- Endpoint: `/api/journals/<journal_id>`
 
-- **Method:** POST
-- **Endpoint:** `/api/journals/sync`
-- **Authentication:** Required
+Request body:
 
-**Request Body:**
+```json
+{
+    "encrypted_content": "UPDATED_BASE64_CIPHERTEXT",
+    "iv": "UPDATED_BASE64_IV"
+}
+```
+
+### 5.4 Delete Journal
+
+- Method: DELETE
+- Endpoint: `/api/journals/<journal_id>`
+
+Deletes only the authenticated user's journal.
+
+Associated mood records are deleted through the database foreign-key cascade.
+
+## 6. Offline Synchronization API
+
+### Synchronize Offline Journals
+
+- Method: POST
+- Endpoint: `/api/journals/sync`
+- Authentication: Required.
+
+Request body:
 
 ```json
 {
     "journals": [
         {
             "journal_id": "offline_journal_001",
-            "encrypted_content": "ENCRYPTED_CONTENT_001",
-            "iv": "IV_VALUE_001"
+            "encrypted_content": "BASE64_CIPHERTEXT_1",
+            "iv": "BASE64_IV_1"
         },
         {
             "journal_id": "offline_journal_002",
-            "encrypted_content": "ENCRYPTED_CONTENT_002",
-            "iv": "IV_VALUE_002"
+            "encrypted_content": "BASE64_CIPHERTEXT_2",
+            "iv": "BASE64_IV_2"
         }
     ]
 }
 ```
 
-The frontend stores journals locally while offline and sends pending encrypted journals to this API when internet connectivity returns.
+Features:
+- Maximum 100 journals per request.
+- Rejects duplicate journal IDs in the same batch.
+- Validates encrypted data and IV format.
+- Checks journal ownership.
+- Uses database transactions.
 
-**Success Response:**
+The frontend is responsible for storing journals locally and sending pending records when connectivity returns.
 
-```json
-{
-    "message": "Journals synchronized successfully",
-    "status": "success",
-    "synced_count": 2
-}
-```
+## 7. Mood Analysis APIs
 
-Maximum batch size: 100 journals.
+Mood analysis data is encrypted before being sent to the backend.
 
-## 6. Mood Analysis APIs
+The backend stores and retrieves encrypted mood-analysis data.
 
-Mood analysis is performed on the frontend using the lexicon-based approach.
+### 7.1 Save Mood Analysis
 
-The backend only stores and retrieves the mood results.
+- Method: POST
+- Endpoint: `/api/mood/save`
+- Authentication: Required.
 
-### 6.1 Save Mood Analysis
-
-- **Method:** POST
-- **Endpoint:** `/api/mood/save`
-- **Authentication:** Required
-
-**Request Body:**
+Request body:
 
 ```json
 {
     "journal_id": "journal_001",
-    "mood_label": "Happy",
-    "mood_score": 85
+    "encrypted_content": "BASE64_ENCRYPTED_MOOD_DATA",
+    "iv": "BASE64_IV"
 }
 ```
 
-### 6.2 Get Mood History
+The encrypted mood information may contain:
+- Mood label
+- Mood score
+- Analysis details
+- Other mood-related information
 
-- **Method:** GET
-- **Endpoint:** `/api/mood/history`
-- **Authentication:** Required
+The backend does not receive these plaintext values through this API.
 
-Returns the authenticated user's mood history.
+### 7.2 Get Mood History
 
-## 7. JWT Authentication
+- Method: GET
+- Endpoint: `/api/mood/history`
+- Authentication: Required.
 
-After successful login, the backend returns a JWT access token.
+Returns the authenticated user's encrypted mood records.
 
-For every protected API request, the frontend must include:
+Example:
+
+```json
+{
+    "status": "success",
+    "mood_history": [
+        {
+            "journal_id": "journal_001",
+            "encrypted_content": "BASE64_ENCRYPTED_MOOD_DATA",
+            "iv": "BASE64_IV",
+            "analyzed_at": "2026-11-26T02:21:27"
+        }
+    ]
+}
+```
+
+## 8. JWT Authentication
+
+After successful registration or login, the backend returns a JWT access token.
+
+Protected API requests must include:
 
 ```text
 Authorization: Bearer ACCESS_TOKEN
 ```
 
-The access token expires after 30 minutes.
+Token expiration: 30 minutes.
 
-The frontend must obtain a new token by logging in again after expiration.
+When the token expires, the user must authenticate again.
 
-## 8. Important Security Information
+## 9. Encryption Validation
 
-1. The original passphrase must never be sent to the backend.
-2. The vault key must remain on the user's device.
-3. Journal content must be encrypted before being sent to the backend.
-4. The backend stores encrypted journal content and IV values.
-5. Mood analysis must happen on the frontend using readable journal text.
-6. The `.env` file must never be shared or committed to GitHub.
+The journal and mood APIs validate:
 
-## 9. Backend Technology Stack
+- Base64 ciphertext format.
+- Minimum ciphertext length of 16 decoded bytes.
+- AES-GCM IV length of 12 decoded bytes.
+- Maximum encrypted payload size.
 
-| Technology | Purpose |
+These checks validate data format, not the authenticity of encryption.
+
+The actual AES-GCM encryption and decryption must happen on the client.
+
+## 10. Database Security
+
+### Users
+Stores account information, salt, PBKDF2 iteration count and bcrypt-hashed login verifier.
+
+### Journals
+Stores:
+- Journal ID
+- User ID
+- Encrypted journal content
+- IV
+- Creation and update timestamps
+
+### Mood Entries
+Stores:
+- User ID
+- Journal ID
+- Encrypted mood content
+- IV
+- Analysis timestamp
+
+Legacy columns `mood_label` and `mood_score` remain for compatibility with older records. New encrypted mood records leave them NULL.
+
+## 11. Current Implementation Status
+
+| Feature | Status |
 |---|---|
-| Python | Backend programming |
-| Flask | REST API development |
-| MySQL | Database |
-| Flask-JWT-Extended | Authentication |
-| Flask-Bcrypt | Login key hashing |
-| Flask-CORS | Frontend-backend communication |
-| PBKDF2 | Client-side key derivation |
-| AES-GCM | Client-side journal encryption |
-| IndexedDB | Frontend offline storage |
+| Registration API | Implemented |
+| Login API | Implemented |
+| JWT authentication | Implemented |
+| Profile APIs | Implemented |
+| Journal CRUD | Implemented |
+| Offline sync API | Implemented |
+| Encrypted mood storage API | Implemented |
+| Ownership validation | Implemented |
+| Database constraints | Verified |
+| Real frontend encryption integration | Pending verification |
+| Ollama local AI integration | Pending |
+| Counsellor consent system | Pending |
+| Complete offline frontend synchronization | Pending verification |
 
-## 10. Local Development
+## 12. Local Development
 
-Start the backend using:
+Activate the virtual environment from the project root.
 
-```bash
-python app.py
+Start Flask:
+
+```powershell
+python .\backend\app.py
 ```
 
 Backend address:
 
-```text
-http://127.0.0.1:5000
+`http://127.0.0.1:5000`
+
+Health check:
+
+`http://127.0.0.1:5000/api/health`
+
+## 13. Important Security Rules
+
+1. Never send the original passphrase to the backend.
+2. Never send the Vault Key to the backend.
+3. Encrypt journal content before uploading.
+4. Encrypt mood-analysis data before uploading.
+5. Decrypt private information only on the user's device.
+6. Never commit `.env` or authentication secrets to GitHub.
+7. Use HTTPS in production.
+8. Disable Flask debug mode in production.
+9. Validate user ownership for every private-data operation.
+10. Keep local AI processing on the user's device.

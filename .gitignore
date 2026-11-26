@@ -16,3 +16,6 @@ __pycache__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Frontend build files
+frontend/frontend/dist/

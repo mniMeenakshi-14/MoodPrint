@@ -9,6 +9,7 @@ import os
 from routes.auth import auth_bp
 from routes.journals import journals_bp
 from routes.mood import mood_bp
+from routes.checkins import checkins_bp
 
 
 # Load environment variables
@@ -58,6 +59,7 @@ jwt = JWTManager(app)
 app.register_blueprint(auth_bp)
 app.register_blueprint(journals_bp)
 app.register_blueprint(mood_bp)
+app.register_blueprint(checkins_bp)
 
 
 # Home route
